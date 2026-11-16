@@ -1,0 +1,29 @@
+---
+const {name} = Astro.props;
+---
+
+<div>
+	<h1>Header {name}</h1>
+	<button class="tombol">Click Saya!</button>
+</div>
+
+<style>
+	div {
+		display: flex;
+		justify-content: center;
+		flex-direction: column;
+		align-items: center;
+	}
+  h1 {
+		font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+		font-size: 36px;
+		text-align: center;
+		padding-top: 24px;
+	}
+	button {
+		width: 100px;
+	}
+</style>
+
+<script src="/src/script/header">
+</script>
