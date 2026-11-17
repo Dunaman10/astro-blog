@@ -1,3 +1,4 @@
 {
-  "antigravity.enableInlineDiff": true
+  "antigravity.enableInlineDiff": true,
+  "editor.tabSize": 2
 }
