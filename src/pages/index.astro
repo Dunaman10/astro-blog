@@ -1,6 +1,7 @@
 ---
 import { getCollection } from "astro:content";
 import MainLayout from "../layouts/MainLayout.astro";
+import Card from "../components/Card.astro";
 
 const blogPosts = await getCollection('blog');
 
@@ -8,8 +9,8 @@ const blogPosts = await getCollection('blog');
 ---
 
 <MainLayout title="Astro">
-	<h1>Homepage</h1>
-	<h2>Slider Posts</h2>
+	<!-- <h1>Homepage</h1> -->
+	<!-- <h2>Slider Posts</h2>
 
 	<ul>
 		{
@@ -21,18 +22,20 @@ const blogPosts = await getCollection('blog');
 			)
 			)
 		}
-	</ul>
+	</ul> -->
 
 	<h2>Articles</h2>
 
-	<ul>
+	<main class="container mt-content">
+		<div class="row row-cols-1 row-cols-md-3 g-4">
 		{
 			blogPosts.map((post) => (
-				<li>
-					<a href={`/blog/${post.id}`}>{post.data.title}</a>
-				</li>
+				<div class="col">
+					<Card post={post} />
+				</div>
 			)
 			)
 		}
-	</ul>
+		</div>
+	</main>
 </MainLayout>
