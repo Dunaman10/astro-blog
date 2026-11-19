@@ -17,7 +17,7 @@ export const getStaticPaths = (async () => {
 }) satisfies GetStaticPaths;
 
 const { post } = Astro.props;
-const { Content } = await render(post);
+const { Content, remarkPluginFrontmatter } = await render(post);
 
 ---
 
@@ -39,6 +39,9 @@ const { Content } = await render(post);
 						<time datetime={post.data.publishedAt}>
 							{getFormattedDate(post.data.publishedAt)}
 						</time>
+            
+            <span> &bull; </span>
+						<p>{remarkPluginFrontmatter.minutesRead}</p>
 					</div>
 				</div>
 			</div>
