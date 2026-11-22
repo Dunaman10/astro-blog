@@ -3,68 +3,433 @@ import { getCollection } from "astro:content";
 import MainLayout from "../layouts/MainLayout.astro";
 import Card from "../components/Card.astro";
 import { SEO } from "astro-seo";
+import Slider from "../components/Slider.astro";
 
 const blogPosts = await getCollection('blog');
-
-// console.log(blogPosts);
+const categories = [...new Set(blogPosts.map((post) => post.data.category))];
 ---
 
 <MainLayout title="Home">
-	 <SEO
-	 		slot="seo"
-      title="A Very Descriptive Title"
-      description="A heavily optimized description full of well-researched keywords."
-      openGraph={{
-        basic: {
-          title: "A Very Descriptive Title",
-          type: "A type.",
-          image: "https://user-images.githubusercontent.com/5182256/131216951-8f74f425-f775-463d-a11b-0e01ad9fce8d.png",
-        }
-      }}
-      twitter={{
-        creator: "@jonasmerlins1"
-      }}
-      extend={{
-        // extending the default link tags
-        link: [{ rel: "icon", href: "/favicon.ico" }],
-        // extending the default meta tags
-        meta: [
-          {
-            name: "twitter:image",
-            content: "https://user-images.githubusercontent.com/5182256/131216951-8f74f425-f775-463d-a11b-0e01ad9fce8d.png",
-          },
-          { name: "twitter:title", content: "Tinker Tailor Soldier Spy" },
-          { name: "twitter:description", content: "Agent" },
-        ],
-      }}
-    />
-	<!-- <h1>Homepage</h1> -->
-	<!-- <h2>Slider Posts</h2>
+	<SEO
+		slot="seo"
+		title="A Very Descriptive Title"
+		description="A heavily optimized description full of well-researched keywords."
+		openGraph={{
+			basic: {
+				title: "A Very Descriptive Title",
+				type: "A type.",
+				image: "https://user-images.githubusercontent.com/5182256/131216951-8f74f425-f775-463d-a11b-0e01ad9fce8d.png",
+			}
+		}}
+		twitter={{
+			creator: "@jonasmerlins1"
+		}}
+		extend={{
+			// extending the default link tags
+			link: [{ rel: "icon", href: "/favicon.ico" }],
+			// extending the default meta tags
+			meta: [
+				{
+					name: "twitter:image",
+					content: "https://user-images.githubusercontent.com/5182256/131216951-8f74f425-f775-463d-a11b-0e01ad9fce8d.png",
+				},
+				{ name: "twitter:title", content: "Tinker Tailor Soldier Spy" },
+				{ name: "twitter:description", content: "Agent" },
+			],
+		}}
+	/>
 
-	<ul>
-		{
-			blogPosts.filter(post => post.data.isPinned).map((post) => (
-				<li>
-					<a href={`/blog/${post.id}`}>{post.data.title}</a>
-					<p>{post.data.author}</p>
-				</li>
-			)
-			)
-		}
-	</ul> -->
+	<Slider posts={blogPosts} />
 
-	<h2>Articles</h2>
+	<main class="container articles-section py-5" id="articles">
+		<div class="section-header d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3 mb-4 pb-3">
+			<div>
+				<span class="section-eyebrow">Eksplorasi Bacaan</span>
+				<h1 class="section-title mb-1">Artikel Terbaru</h1>
+				<p class="section-subtitle mb-0">
+					Kumpulan tulisan pilihan seputar teknologi, karir, keuangan, dan keseimbangan hidup.
+				</p>
+			</div>
 
-	<main class="container mt-content">
-		<div class="row row-cols-1 row-cols-md-3 g-4">
-		{
-			blogPosts.map((post) => (
-				<div class="col">
-					<Card post={post} />
-				</div>
-			)
-			)
-		}
+			<div class="category-filter-bar d-flex flex-wrap gap-2" role="tablist" aria-label="Filter kategori artikel">
+				<button type="button" class="filter-pill active" data-category="all" aria-selected="true">
+					Semua <span class="filter-count">{blogPosts.length}</span>
+				</button>
+				{
+					categories.map((category) => (
+						<button type="button" class="filter-pill" data-category={category.toLowerCase()} aria-selected="false">
+							{category}
+						</button>
+					))
+				}
+			</div>
+		</div>
+
+		<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="articlesGrid">
+			{
+				blogPosts.map((post) => (
+					<div
+						class="col article-item"
+						data-category={post.data.category.toLowerCase()}
+						data-search={`${post.data.title} ${post.data.excerpt} ${post.data.category} ${post.data.author}`.toLowerCase()}
+					>
+						<Card post={post} />
+					</div>
+				))
+			}
+		</div>
+
+		<div class="empty-state text-center py-5 d-none" id="emptyArticlesState">
+			<p class="empty-title mb-2">Tidak ada artikel yang cocok</p>
+			<p class="empty-desc mb-3">Coba kata kunci lain atau tampilkan kembali seluruh kategori.</p>
+			<button type="button" class="btn-reset-filter" id="resetFilterBtn">
+				Tampilkan Semua Artikel
+			</button>
 		</div>
 	</main>
 </MainLayout>
+
+<script>
+	const filterButtons = document.querySelectorAll<HTMLButtonElement>('.filter-pill');
+	const articleItems = document.querySelectorAll<HTMLElement>('.article-item');
+	const emptyState = document.getElementById('emptyArticlesState');
+	const resetBtn = document.getElementById('resetFilterBtn');
+	const searchInput = document.getElementById('headerSearchInput') as HTMLInputElement | null;
+
+	let activeCategory = 'all';
+	let activeQuery = '';
+
+	const applyFilters = () => {
+		let visibleCount = 0;
+		const normalizedQuery = activeQuery.trim().toLowerCase();
+
+		articleItems.forEach((item) => {
+			const itemCategory = item.dataset.category || '';
+			const itemSearch = item.dataset.search || '';
+			const matchesCategory = activeCategory === 'all' || itemCategory === activeCategory;
+			const matchesQuery = !normalizedQuery || itemSearch.includes(normalizedQuery);
+			const show = matchesCategory && matchesQuery;
+
+			item.classList.toggle('d-none', !show);
+			if (show) visibleCount += 1;
+		});
+
+		if (emptyState) {
+			emptyState.classList.toggle('d-none', visibleCount > 0);
+		}
+	};
+
+	filterButtons.forEach((btn) => {
+		btn.addEventListener('click', () => {
+			activeCategory = btn.dataset.category || 'all';
+			filterButtons.forEach((b) => {
+				const isSelected = b === btn;
+				b.classList.toggle('active', isSelected);
+				b.setAttribute('aria-selected', String(isSelected));
+			});
+			applyFilters();
+		});
+	});
+
+	window.addEventListener('blog:search', (event) => {
+		const customEvent = event as CustomEvent<{ query: string }>;
+		activeQuery = customEvent.detail?.query || '';
+		applyFilters();
+	});
+
+	if (resetBtn) {
+		resetBtn.addEventListener('click', () => {
+			activeCategory = 'all';
+			activeQuery = '';
+			if (searchInput) searchInput.value = '';
+			filterButtons.forEach((b) => {
+				const isAll = b.dataset.category === 'all';
+				b.classList.toggle('active', isAll);
+				b.setAttribute('aria-selected', String(isAll));
+			});
+			applyFilters();
+		});
+	}
+</script>
+
+<style>
+	.section-header {
+		border-bottom: 1px solid var(--border-subtle);
+	}
+
+	.section-eyebrow {
+		display: inline-block;
+		font-size: 0.75rem;
+		font-weight: 600;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--accent-warm);
+		margin-bottom: 0.35rem;
+	}
+
+	.section-title {
+		font-family: var(--font-serif);
+		font-size: clamp(1.85rem, 2.8vw, 2.4rem);
+		font-weight: 600;
+		color: var(--ink-primary);
+	}
+
+	.section-subtitle {
+		font-size: 0.95rem;
+		color: var(--ink-muted);
+	}
+
+	.filter-pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.45rem 1rem;
+		border-radius: 999px;
+		border: 1px solid var(--border-subtle);
+		background-color: var(--bg-surface);
+		color: var(--ink-body);
+		font-size: 0.84rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all var(--transition-base);
+	}
+
+	.filter-pill:hover {
+		border-color: var(--border-strong);
+		color: var(--ink-primary);
+		transform: translateY(-1px);
+	}
+
+	.filter-pill.active {
+		background-color: var(--accent-primary);
+		border-color: var(--accent-primary);
+		color: #ffffff;
+		box-shadow: 0 4px 12px rgba(30, 58, 95, 0.2);
+	}
+
+	.filter-count {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 20px;
+		height: 20px;
+		padding: 0 0.35rem;
+		border-radius: 999px;
+		background-color: rgba(255, 255, 255, 0.2);
+		font-size: 0.72rem;
+		font-weight: 600;
+	}
+
+	.filter-pill:not(.active) .filter-count {
+		background-color: var(--bg-subtle);
+		color: var(--ink-muted);
+	}
+
+	.empty-state {
+		background-color: var(--bg-surface);
+		border: 1px dashed var(--border-strong);
+		border-radius: var(--radius-md);
+		margin-top: 1.5rem;
+	}
+
+	.empty-title {
+		font-family: var(--font-serif);
+		font-size: 1.4rem;
+		font-weight: 600;
+		color: var(--ink-primary);
+	}
+
+	.empty-desc {
+		color: var(--ink-muted);
+		font-size: 0.925rem;
+	}
+
+	.btn-reset-filter {
+		padding: 0.55rem 1.25rem;
+		border-radius: 999px;
+		border: none;
+		background-color: var(--accent-primary);
+		color: #ffffff;
+		font-size: 0.875rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: background-color var(--transition-base);
+	}
+
+	.btn-reset-filter:hover {
+		background-color: var(--accent-hover);
+	}
+</style>
+
+
+<script>
+	const filterButtons = document.querySelectorAll<HTMLButtonElement>('.filter-pill');
+	const articleItems = document.querySelectorAll<HTMLElement>('.article-item');
+	const emptyState = document.getElementById('emptyArticlesState');
+	const resetBtn = document.getElementById('resetFilterBtn');
+	const searchInput = document.getElementById('headerSearchInput') as HTMLInputElement | null;
+
+	let activeCategory = 'all';
+	let activeQuery = '';
+
+	const applyFilters = () => {
+		let visibleCount = 0;
+		const normalizedQuery = activeQuery.trim().toLowerCase();
+
+		articleItems.forEach((item) => {
+			const itemCategory = item.dataset.category || '';
+			const itemSearch = item.dataset.search || '';
+			const matchesCategory = activeCategory === 'all' || itemCategory === activeCategory;
+			const matchesQuery = !normalizedQuery || itemSearch.includes(normalizedQuery);
+			const show = matchesCategory && matchesQuery;
+
+			item.classList.toggle('d-none', !show);
+			if (show) visibleCount += 1;
+		});
+
+		if (emptyState) {
+			emptyState.classList.toggle('d-none', visibleCount > 0);
+		}
+	};
+
+	filterButtons.forEach((btn) => {
+		btn.addEventListener('click', () => {
+			activeCategory = btn.dataset.category || 'all';
+			filterButtons.forEach((b) => {
+				const isSelected = b === btn;
+				b.classList.toggle('active', isSelected);
+				b.setAttribute('aria-selected', String(isSelected));
+			});
+			applyFilters();
+		});
+	});
+
+	window.addEventListener('blog:search', (event) => {
+		const customEvent = event as CustomEvent<{ query: string }>;
+		activeQuery = customEvent.detail?.query || '';
+		applyFilters();
+	});
+
+	if (resetBtn) {
+		resetBtn.addEventListener('click', () => {
+			activeCategory = 'all';
+			activeQuery = '';
+			if (searchInput) searchInput.value = '';
+			filterButtons.forEach((b) => {
+				const isAll = b.dataset.category === 'all';
+				b.classList.toggle('active', isAll);
+				b.setAttribute('aria-selected', String(isAll));
+			});
+			applyFilters();
+		});
+	}
+</script>
+
+<style>
+	.section-header {
+		border-bottom: 1px solid var(--border-subtle);
+	}
+
+	.section-eyebrow {
+		display: inline-block;
+		font-size: 0.75rem;
+		font-weight: 600;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--accent-warm);
+		margin-bottom: 0.35rem;
+	}
+
+	.section-title {
+		font-family: var(--font-serif);
+		font-size: clamp(1.85rem, 2.8vw, 2.4rem);
+		font-weight: 600;
+		color: var(--ink-primary);
+	}
+
+	.section-subtitle {
+		font-size: 0.95rem;
+		color: var(--ink-muted);
+	}
+
+	.filter-pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.45rem 1rem;
+		border-radius: 999px;
+		border: 1px solid var(--border-subtle);
+		background-color: var(--bg-surface);
+		color: var(--ink-body);
+		font-size: 0.84rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all var(--transition-base);
+	}
+
+	.filter-pill:hover {
+		border-color: var(--border-strong);
+		color: var(--ink-primary);
+		transform: translateY(-1px);
+	}
+
+	.filter-pill.active {
+		background-color: var(--accent-primary);
+		border-color: var(--accent-primary);
+		color: #ffffff;
+		box-shadow: 0 4px 12px rgba(30, 58, 95, 0.2);
+	}
+
+	.filter-count {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 20px;
+		height: 20px;
+		padding: 0 0.35rem;
+		border-radius: 999px;
+		background-color: rgba(255, 255, 255, 0.2);
+		font-size: 0.72rem;
+		font-weight: 600;
+	}
+
+	.filter-pill:not(.active) .filter-count {
+		background-color: var(--bg-subtle);
+		color: var(--ink-muted);
+	}
+
+	.empty-state {
+		background-color: var(--bg-surface);
+		border: 1px dashed var(--border-strong);
+		border-radius: var(--radius-md);
+		margin-top: 1.5rem;
+	}
+
+	.empty-title {
+		font-family: var(--font-serif);
+		font-size: 1.4rem;
+		font-weight: 600;
+		color: var(--ink-primary);
+	}
+
+	.empty-desc {
+		color: var(--ink-muted);
+		font-size: 0.925rem;
+	}
+
+	.btn-reset-filter {
+		padding: 0.55rem 1.25rem;
+		border-radius: 999px;
+		border: none;
+		background-color: var(--accent-primary);
+		color: #ffffff;
+		font-size: 0.875rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: background-color var(--transition-base);
+	}
+
+	.btn-reset-filter:hover {
+		background-color: var(--accent-hover);
+	}
+</style>

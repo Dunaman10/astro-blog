@@ -1,29 +1,207 @@
 ---
-
+const currentPath = Astro.url.pathname;
+const isHome = currentPath === '/' || currentPath === '';
 ---
 
-<nav class="navbar md:navbar-expand bg-1 fg-2">
-  <div class="container-fluid">
-    <button class="btn-icon navbar-toggler" type="button" data-bs-toggle="drawer" data-bs-target="#navbarTogglerDemo01" aria-controls="navbarTogglerDemo01" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon" aria-hidden="true"></span>
-    </button>
-    <dialog class="drawer drawer-end" tabindex="-1" id="navbarTogglerDemo01" aria-labelledby="navbarTogglerDemo01Label">
-      <div class="drawer-header">
-        <h5 class="drawer-title" id="navbarTogglerDemo01Label">Hidden brand</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="drawer" aria-label="Close"></button>
-      </div>
-      <div class="drawer-body">
-        <a class="navbar-brand" href="#">Hidden brand</a>
-        <ul class="navbar-nav me-auto mb-2 md:mb-0">
-          <li class="nav-item"><a class="nav-link active" aria-current="page" href="#">Home</a></li>
-          <li class="nav-item"><a class="nav-link" href="#">Link</a></li>
-          <li class="nav-item"><a class="nav-link disabled" aria-disabled="true">Disabled</a></li>
-        </ul>
-        <form class="d-flex" role="search">
-          <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search"/>
-          <button class="btn-outline theme-success" type="submit">Search</button>
-        </form>
-      </div>
-    </dialog>
-  </div>
-</nav>
+<header class="site-header sticky-top">
+	<nav class="navbar navbar-expand-lg" aria-label="Navigasi utama">
+		<div class="container py-1">
+			<a class="navbar-brand d-flex align-items-center gap-2" href="/">
+				<span class="brand-mark" aria-hidden="true">A</span>
+				<span class="brand-text">AstroJournal<span class="brand-dot">.</span></span>
+			</a>
+
+			<button
+				class="navbar-toggler border-0 shadow-none"
+				type="button"
+				data-bs-toggle="collapse"
+				data-bs-target="#mainNavbar"
+				aria-controls="mainNavbar"
+				aria-expanded="false"
+				aria-label="Buka navigasi"
+			>
+				<span class="navbar-toggler-icon"></span>
+			</button>
+
+			<div class="collapse navbar-collapse" id="mainNavbar">
+				<ul class="navbar-nav mx-auto mb-3 mb-lg-0 gap-lg-2">
+					<li class="nav-item">
+						<a class:list={['nav-link', { active: isHome }]} aria-current={isHome ? 'page' : undefined} href="/">
+							Beranda
+						</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href={isHome ? '#featured' : '/#featured'}>
+							Sorotan
+						</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href={isHome ? '#articles' : '/#articles'}>
+							Artikel
+						</a>
+					</li>
+				</ul>
+
+				<form class="header-search d-flex align-items-center" role="search" id="headerSearchForm">
+					<div class="search-input-wrap position-relative w-100">
+						<svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+							<circle cx="11" cy="11" r="8"></circle>
+							<path d="m21 21-4.3-4.3"></path>
+						</svg>
+						<input
+							id="headerSearchInput"
+							class="form-control search-field"
+							type="search"
+							placeholder="Cari artikel..."
+							aria-label="Cari artikel"
+							autocomplete="off"
+						/>
+					</div>
+				</form>
+			</div>
+		</div>
+	</nav>
+</header>
+
+<script>
+	const form = document.getElementById('headerSearchForm');
+	const input = document.getElementById('headerSearchInput') as HTMLInputElement | null;
+
+	const dispatchSearch = (query: string) => {
+		window.dispatchEvent(new CustomEvent('blog:search', { detail: { query } }));
+	};
+
+	if (input) {
+		const params = new URLSearchParams(window.location.search);
+		const initialQuery = params.get('q');
+		if (initialQuery) {
+			input.value = initialQuery;
+			window.addEventListener('DOMContentLoaded', () => dispatchSearch(initialQuery));
+			dispatchSearch(initialQuery);
+		}
+
+		input.addEventListener('input', () => {
+			if (document.getElementById('articlesGrid')) {
+				dispatchSearch(input.value);
+			}
+		});
+	}
+
+	if (form && input) {
+		form.addEventListener('submit', (e) => {
+			e.preventDefault();
+			const query = input.value.trim();
+			const articlesSection = document.getElementById('articles');
+			if (articlesSection) {
+				dispatchSearch(query);
+				articlesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			} else if (query) {
+				window.location.href = `/?q=${encodeURIComponent(query)}#articles`;
+			} else {
+				window.location.href = '/#articles';
+			}
+		});
+	}
+</script>
+
+<style>
+	.site-header {
+		background-color: rgba(249, 248, 246, 0.85);
+		backdrop-filter: blur(14px);
+		-webkit-backdrop-filter: blur(14px);
+		border-bottom: 1px solid var(--border-subtle);
+		z-index: 1030;
+	}
+
+	.navbar-brand {
+		text-decoration: none;
+		padding: 0.25rem 0;
+	}
+
+	.brand-mark {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 34px;
+		height: 34px;
+		border-radius: 10px;
+		background: linear-gradient(135deg, var(--accent-primary), #2b4f7d);
+		color: #ffffff;
+		font-family: var(--font-serif);
+		font-weight: 700;
+		font-size: 1.15rem;
+		box-shadow: 0 4px 12px rgba(30, 58, 95, 0.2);
+	}
+
+	.brand-text {
+		font-family: var(--font-serif);
+		font-size: 1.35rem;
+		font-weight: 600;
+		color: var(--ink-primary);
+		letter-spacing: -0.02em;
+	}
+
+	.brand-dot {
+		color: var(--accent-warm);
+	}
+
+	.navbar-nav .nav-link {
+		font-size: 0.925rem;
+		font-weight: 500;
+		color: var(--ink-muted);
+		padding: 0.5rem 0.9rem;
+		border-radius: 999px;
+		transition: color var(--transition-base), background-color var(--transition-base);
+	}
+
+	.navbar-nav .nav-link:hover,
+	.navbar-nav .nav-link.active {
+		color: var(--ink-primary);
+		background-color: rgba(20, 24, 31, 0.045);
+	}
+
+	.header-search {
+		min-width: 230px;
+	}
+
+	.search-icon {
+		position: absolute;
+		left: 0.9rem;
+		top: 50%;
+		transform: translateY(-50%);
+		width: 15px;
+		height: 15px;
+		color: var(--ink-muted);
+		pointer-events: none;
+	}
+
+	.search-field {
+		padding: 0.5rem 1rem 0.5rem 2.4rem;
+		font-size: 0.875rem;
+		border-radius: 999px;
+		border: 1px solid var(--border-subtle);
+		background-color: var(--bg-surface);
+		color: var(--ink-primary);
+		transition: border-color var(--transition-base), box-shadow var(--transition-base);
+	}
+
+	.search-field::placeholder {
+		color: #9ca3af;
+	}
+
+	.search-field:focus {
+		border-color: rgba(30, 58, 95, 0.35);
+		box-shadow: 0 0 0 4px rgba(30, 58, 95, 0.08);
+		background-color: var(--bg-surface);
+	}
+
+	@media (max-width: 991.98px) {
+		.navbar-collapse {
+			padding: 1rem 0 0.75rem;
+		}
+
+		.header-search {
+			width: 100%;
+		}
+	}
+</style>

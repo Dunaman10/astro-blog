@@ -1,11 +1,77 @@
 ---
 import { SocialShare } from "astro-social-share";
+
+interface Props {
+	title?: string;
+	description?: string;
+}
+
+const {
+	title = "Page Title",
+	description = "Description of the page/post",
+} = Astro.props;
 ---
 
-<div class="social-share">
-  <p>Share:</p> 
-  <SocialShare
-      description="Description of the page/post"
-      title="Page Title"
-  />
+<div class="share-wrapper d-flex justify-content-center my-4">
+	<div class="social-share">
+		<p class="share-label">Bagikan</p>
+		<SocialShare
+			description={description}
+			title={title}
+		/>
+		<button type="button" class="copy-link-btn" data-copy-link aria-label="Salin tautan artikel">
+			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
+				<path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+			</svg>
+			<span class="copy-label">Salin Tautan</span>
+		</button>
+	</div>
 </div>
+
+<script>
+	const copyButtons = document.querySelectorAll<HTMLButtonElement>('[data-copy-link]');
+	copyButtons.forEach((btn) => {
+		if (btn.dataset.bound === 'true') return;
+		btn.dataset.bound = 'true';
+
+		btn.addEventListener('click', async () => {
+			try {
+				await navigator.clipboard.writeText(window.location.href);
+				const label = btn.querySelector('.copy-label');
+				btn.classList.add('copied');
+				if (label) label.textContent = 'Tersalin!';
+				setTimeout(() => {
+					btn.classList.remove('copied');
+					if (label) label.textContent = 'Salin Tautan';
+				}, 2000);
+			} catch {
+				// Fallback ignored when clipboard is unavailable
+			}
+		});
+	});
+</script>
+
+
+<script>
+	const copyButtons = document.querySelectorAll<HTMLButtonElement>('[data-copy-link]');
+	copyButtons.forEach((btn) => {
+		if (btn.dataset.bound === 'true') return;
+		btn.dataset.bound = 'true';
+
+		btn.addEventListener('click', async () => {
+			try {
+				await navigator.clipboard.writeText(window.location.href);
+				const label = btn.querySelector('.copy-label');
+				btn.classList.add('copied');
+				if (label) label.textContent = 'Tersalin!';
+				setTimeout(() => {
+					btn.classList.remove('copied');
+					if (label) label.textContent = 'Salin Tautan';
+				}, 2000);
+			} catch {
+				// Fallback ignored when clipboard is unavailable
+			}
+		});
+	});
+</script>

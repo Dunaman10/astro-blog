@@ -3,58 +3,169 @@ import { Image } from "astro:assets";
 import type { CollectionEntry } from "astro:content";
 import { getFormattedDate } from '../utils/global.js';
 
-
 interface Props {
-  post: CollectionEntry<"blog">;
+	post: CollectionEntry<"blog">;
 }
 
 const { post } = Astro.props;
 ---
 
-<div class="card">
-  <div class="thumbnail">
-    <Image inferSize src={post.data.image} alt={post.data.image}/>
-  </div>
-  <div class="card-body">
-    <h5 class="card-title">
-      <a href={`blog/${post.id}`}>{post.data.title}</a>
-    </h5>
-  </div>
-  <div class="card-footer">
-    <div class="meta">
-      <p>{post.data.author}</p>
-      <span>&bull;</span>
-      <time datetime={post.data.publishedAt}>{getFormattedDate(post.data.publishedAt)}</time>
-    </div>
-  </div>
-</div>
+<article class="card blog-card h-100 border-0">
+	<div class="thumbnail position-relative overflow-hidden">
+		<Image inferSize src={post.data.image} alt={post.data.title} class="card-thumb-img" />
+		<span class="category-pill category-pill-glass card-badge">
+			{post.data.category}
+		</span>
+	</div>
+
+	<div class="card-body d-flex flex-column p-4">
+		<h3 class="card-title mb-2">
+			<a href={`/blog/${post.id}`} class="stretched-link card-title-link">
+				{post.data.title}
+			</a>
+		</h3>
+		<p class="card-excerpt mb-0">
+			{post.data.excerpt}
+		</p>
+	</div>
+
+	<div class="card-footer bg-transparent border-0 px-4 pb-4 pt-0">
+		<div class="card-footer-inner d-flex align-items-center justify-content-between pt-3">
+			<div class="meta d-flex align-items-center gap-2">
+				<span class="author-badge" aria-hidden="true">
+					{post.data.author.charAt(0).toUpperCase()}
+				</span>
+				<span class="author-name">{post.data.author}</span>
+				<span class="meta-dot" aria-hidden="true">&bull;</span>
+				<time datetime={post.data.publishedAt}>
+					{getFormattedDate(post.data.publishedAt)}
+				</time>
+			</div>
+			<span class="read-arrow" aria-hidden="true">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<path d="M5 12h14"></path>
+					<path d="m12 5 7 7-7 7"></path>
+				</svg>
+			</span>
+		</div>
+	</div>
+</article>
 
 <style>
-	/* Make image inside  */
-	.thumbnail {
-		height: 200px;
-		background-color: #eeeeee;
-		border-radius: 0.5rem;
+	.blog-card {
+		background-color: var(--bg-surface);
+		border-radius: var(--radius-md);
+		border: 1px solid var(--border-subtle) !important;
+		box-shadow: var(--shadow-xs);
+		overflow: hidden;
+		transition: transform var(--transition-base), box-shadow var(--transition-base),
+			border-color var(--transition-base);
 	}
 
-	.thumbnail img {
+	.blog-card:hover {
+		transform: translateY(-5px);
+		box-shadow: var(--shadow-md);
+		border-color: var(--border-strong) !important;
+	}
+
+	.thumbnail {
+		aspect-ratio: 16 / 10;
+		background-color: var(--bg-subtle);
+	}
+
+	.thumbnail :global(img) {
 		width: 100%;
-		object-fit: cover;
 		height: 100%;
-		border-radius: 0.5rem;
+		object-fit: cover;
+		display: block;
+		transition: transform 500ms cubic-bezier(0.22, 1, 0.36, 1);
+	}
+
+	.blog-card:hover .thumbnail :global(img) {
+		transform: scale(1.05);
+	}
+
+	.card-badge {
+		position: absolute;
+		top: 0.9rem;
+		left: 0.9rem;
+		z-index: 2;
+	}
+
+	.card-title {
+		font-family: var(--font-serif);
+		font-size: 1.25rem;
+		font-weight: 600;
+		line-height: 1.35;
+		color: var(--ink-primary);
+	}
+
+	.card-title-link {
+		color: inherit;
+		text-decoration: none;
+		transition: color var(--transition-base);
+	}
+
+	.blog-card:hover .card-title-link {
+		color: var(--accent-primary);
+	}
+
+	.card-excerpt {
+		font-size: 0.9rem;
+		line-height: 1.6;
+		color: var(--ink-muted);
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	.card-footer-inner {
+		border-top: 1px solid var(--border-subtle);
 	}
 
 	.meta {
-		display: flex;
-		font-size: small;
+		font-size: 0.8rem;
+		color: var(--ink-muted);
 	}
 
-	.meta p {
-		margin: 0;
-		margin-right: 0.5rem;
+	.author-badge {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 24px;
+		height: 24px;
+		border-radius: 999px;
+		background-color: var(--accent-warm-soft);
+		color: var(--accent-warm);
+		font-size: 0.72rem;
+		font-weight: 700;
+		flex-shrink: 0;
 	}
 
-	.meta time {
-		margin-left: 0.5rem;
+	.author-name {
+		font-weight: 500;
+		color: var(--ink-body);
+	}
+
+	.meta-dot {
+		opacity: 0.5;
+	}
+
+	.read-arrow {
+		display: inline-flex;
+		align-items: center;
+		color: var(--ink-muted);
+		transition: transform var(--transition-base), color var(--transition-base);
+	}
+
+	.read-arrow svg {
+		width: 16px;
+		height: 16px;
+	}
+
+	.blog-card:hover .read-arrow {
+		transform: translateX(4px);
+		color: var(--accent-warm);
 	}
 </style>

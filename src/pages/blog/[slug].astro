@@ -6,25 +6,23 @@ import { Image } from "astro:assets";
 import erika from "../../assets/erika.jpg";
 import { getFormattedDate } from "../../utils/global";
 import { SEO } from "astro-seo";
-import Share from '../../components/Share.astro'
+import Share from '../../components/Share.astro';
 
 export const getStaticPaths = (async () => {
-  
-  const blogPosts = await getCollection('blog');
+	const blogPosts = await getCollection('blog');
 
-  return blogPosts.map((post) => ({
-    params: {slug: post.id},
-    props: {post}
-  }));
+	return blogPosts.map((post) => ({
+		params: { slug: post.id },
+		props: { post }
+	}));
 }) satisfies GetStaticPaths;
 
 const { post } = Astro.props;
 const { Content, remarkPluginFrontmatter } = await render(post);
-
 ---
 
 <MainLayout title={post.data.title}>
-	 <SEO
+	<SEO
 		slot='seo'
 		title={post.data.title}
 		description={post.data.excerpt}
@@ -43,154 +41,349 @@ const { Content, remarkPluginFrontmatter } = await render(post);
 			},
 		}}
 	/>
-  <main class='mt-content'>
-		<div class='content-header'>
-			<h1>
-				{post.data.title}
-			</h1>
-			<div class='meta'>
-				<div class='image'>
-					<Image src={erika} alt='Author' />
+
+	<div class="reading-progress-track" aria-hidden="true">
+		<div class="reading-progress-bar" id="readingProgressBar"></div>
+	</div>
+
+	<article class="article-page py-4 py-md-5">
+		<div class="container">
+			<div class="article-shell mx-auto">
+				<div class="article-topbar d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+					<a href="/" class="back-link">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+							<path d="M19 12H5"></path>
+							<path d="m12 19-7-7 7-7"></path>
+						</svg>
+						Kembali ke Artikel
+					</a>
+					<span class="category-pill">{post.data.category}</span>
 				</div>
 
-				<div class='text'>
-					<p>
-            {post.data.author}
+				<header class="content-header text-center mx-auto">
+					<h1 class="article-title mb-3">
+						{post.data.title}
+					</h1>
+					<p class="article-lead mb-4">
+						{post.data.excerpt}
 					</p>
-					<div>
-						<time datetime={post.data.publishedAt}>
-							{getFormattedDate(post.data.publishedAt)}
-						</time>
-            
-            <span> &bull; </span>
-						<p>{remarkPluginFrontmatter.minutesRead}</p>
+
+					<div class="meta d-inline-flex align-items-center gap-3 text-start">
+						<div class="image">
+							<Image src={erika} alt={post.data.author} />
+						</div>
+						<div class="text">
+							<p class="author-name mb-0">{post.data.author}</p>
+							<div class="meta-details d-flex align-items-center flex-wrap gap-2">
+								<time datetime={post.data.publishedAt}>
+									{getFormattedDate(post.data.publishedAt)}
+								</time>
+								<span aria-hidden="true">&bull;</span>
+								<span class="reading-time-badge">
+									{remarkPluginFrontmatter.minutesRead}
+								</span>
+							</div>
+						</div>
 					</div>
+				</header>
+
+				<Share title={post.data.title} description={post.data.excerpt} />
+
+				<figure class="picture my-4 my-md-5">
+					<Image inferSize src={post.data.image} alt={post.data.title} />
+				</figure>
+
+				<div class="content article-prose mx-auto">
+					<Content />
 				</div>
+
+				<div class="article-divider my-5" aria-hidden="true"></div>
+
+				<div class="bottom-share-box text-center mb-5">
+					<p class="bottom-share-heading mb-2">Menyukai artikel ini?</p>
+					<p class="bottom-share-sub mb-3">Bagikan kepada teman atau rekan Anda agar semakin banyak yang terbantu.</p>
+					<Share title={post.data.title} description={post.data.excerpt} />
+				</div>
+
+				<section class="author-card d-flex flex-column flex-sm-row align-items-center align-items-sm-start gap-3 p-4 mb-5">
+					<div class="author-card-avatar">
+						<Image src={erika} alt={post.data.author} />
+					</div>
+					<div class="text-center text-sm-start">
+						<span class="author-card-label">Ditulis oleh</span>
+						<h2 class="author-card-name h5 mb-1">{post.data.author}</h2>
+						<p class="author-card-bio mb-0">
+							Penulis yang gemar berbagi wawasan praktis mengenai pengembangan web, pengelolaan karir, keuangan personal, dan gaya hidup sehat.
+						</p>
+					</div>
+				</section>
+
+				<!-- Disqus Comment Goes Here! -->
+				<section class="discussion-section p-4 p-md-5" aria-labelledby="discussionTitle">
+					<div class="mb-4">
+						<h2 id="discussionTitle" class="h4 mb-1">Diskusi &amp; Komentar</h2>
+						<p class="text-muted small mb-0">Punya pendapat atau pertanyaan terkait topik ini? Sampaikan di bawah.</p>
+					</div>
+					<div id='disqus_thread'></div>
+				</section>
 			</div>
 		</div>
-
-				<Share />
-		
-
-		<div class='picture'>
-      <Image inferSize src={post.data.image} alt={post.data.image}/>
-		</div>
-		<div class='content'>
-      <Content />
-		</div>
-
-
-		<!-- Social Button Goes Here! -->
-		<Share />
-
-
-		<!-- Disqus Comment Goes Here! -->
-		<div id='disqus_thread'>
-			
-		</div>
-	</main>
+	</article>
 </MainLayout>
+
+<script>
+	const progressBar = document.getElementById('readingProgressBar');
+	const updateProgress = () => {
+		if (!progressBar) return;
+		const scrollTop = window.scrollY;
+		const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+		const progress = docHeight > 0 ? Math.min(100, Math.max(0, (scrollTop / docHeight) * 100)) : 0;
+		progressBar.style.width = `${progress}%`;
+	};
+
+	window.addEventListener('scroll', updateProgress, { passive: true });
+	updateProgress();
+</script>
 
 <script is:inline define:vars={{ PAGE_URL: Astro.url.href, PAGE_IDENTIFIER: post.id }}>
 	var disqus_config = function () {
-    this.page.url = PAGE_URL;  // Replace PAGE_URL with your page's canonical URL variable
-    this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
-    };
+		this.page.url = PAGE_URL; // Replace PAGE_URL with your page's canonical URL variable
+		this.page.identifier = PAGE_IDENTIFIER; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+	};
 
 	(function() { // DON'T EDIT BELOW THIS LINE
-	var d = document, s = d.createElement('script');
-	s.src = 'https://astro-blog-2.disqus.com/embed.js';
-	s.setAttribute('data-timestamp', +new Date());
-	(d.head || d.body).appendChild(s);
+		var d = document, s = d.createElement('script');
+		s.src = 'https://astro-blog-2.disqus.com/embed.js';
+		s.setAttribute('data-timestamp', +new Date());
+		(d.head || d.body).appendChild(s);
 	})();
 </script>
 
 <style>
-	main {
-		display: grid;
-		grid-template-columns: repeat(1fr);
-		max-width: 64rem;
-		padding: 6rem 2rem;
-		background-color: #fff;
-		margin: 0 auto;
+	.reading-progress-track {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 3px;
+		background: transparent;
+		z-index: 1040;
+		pointer-events: none;
 	}
 
-	main .content-header {
-		display: flex;
-		flex-direction: column;
+	.reading-progress-bar {
+		height: 100%;
+		width: 0%;
+		background: linear-gradient(90deg, var(--accent-primary), var(--accent-warm));
+		transition: width 80ms linear;
+	}
+
+	.article-shell {
+		max-width: 960px;
+		background-color: var(--bg-surface);
+		border: 1px solid var(--border-subtle);
+		border-radius: var(--radius-lg);
+		box-shadow: var(--shadow-sm);
+		padding: clamp(1.5rem, 4vw, 3.75rem);
+	}
+
+	.back-link {
+		display: inline-flex;
 		align-items: center;
-		text-align: center;
-		margin: 0 auto;
-	}
-
-	main .meta {
-		display: flex;
+		gap: 0.45rem;
 		font-size: 0.875rem;
-		margin-top: 1rem;
-		margin-bottom: 1rem;
+		font-weight: 500;
+		color: var(--ink-muted);
+		text-decoration: none;
+		padding: 0.4rem 0.85rem;
+		border-radius: 999px;
+		background-color: var(--bg-canvas);
+		border: 1px solid var(--border-subtle);
+		transition: all var(--transition-base);
 	}
 
-	main .meta > div {
-		margin-right: 1rem;
+	.back-link svg {
+		width: 15px;
+		height: 15px;
+		transition: transform var(--transition-base);
 	}
 
-	main .meta .image {
-		width: 52px;
-		height: 52px;
+	.back-link:hover {
+		color: var(--ink-primary);
+		border-color: var(--border-strong);
+	}
+
+	.back-link:hover svg {
+		transform: translateX(-3px);
+	}
+
+	.content-header {
+		max-width: 760px;
+	}
+
+	.article-title {
+		font-family: var(--font-serif);
+		font-size: clamp(1.9rem, 4vw, 3rem);
+		font-weight: 600;
+		line-height: 1.18;
+		color: var(--ink-primary);
+	}
+
+	.article-lead {
+		font-size: 1.075rem;
+		line-height: 1.7;
+		color: var(--ink-muted);
+	}
+
+	.meta {
+		padding: 0.65rem 1.25rem 0.65rem 0.75rem;
+		background-color: var(--bg-canvas);
+		border: 1px solid var(--border-subtle);
+		border-radius: 999px;
+	}
+
+	.meta .image {
+		width: 48px;
+		height: 48px;
 		aspect-ratio: 1 / 1;
 		overflow: hidden;
+		border-radius: 999px;
 		flex-shrink: 0;
+		border: 2px solid #ffffff;
+		box-shadow: var(--shadow-xs);
 	}
 
-	main .meta .image img {
+	.meta .image :global(img) {
 		object-fit: cover;
 		width: 100%;
 		height: 100%;
-		border-radius: 9999px;
+		display: block;
 	}
 
-	main .meta .text {
-		display: flex;
-		flex-direction: column;
-		align-items: start;
+	.meta .author-name {
+		font-size: 0.95rem;
+		font-weight: 600;
+		color: var(--ink-primary);
+		line-height: 1.25;
 	}
 
-	main .meta .text > p {
-		font-size: 1.25rem;
-		font-weight: 300;
-		margin-bottom: 0;
+	.meta-details {
+		font-size: 0.82rem;
+		color: var(--ink-muted);
 	}
 
-	main .meta .text div:last-child {
-		display: flex;
-		color: #737373;
+	.reading-time-badge {
+		color: var(--accent-warm);
+		font-weight: 500;
 	}
 
-	main .meta .text div:last-child span {
-		margin: 0 0.5rem;
-	}
-
-	main .content-header h1 {
-		max-width: 768px;
-	}
-
-	main .picture {
-		height: 500px;
-		border-radius: 0.5rem;
-	}
-
-	main .picture img {
+	.picture {
 		width: 100%;
-		object-fit: cover;
+		aspect-ratio: 16 / 9;
+		max-height: 520px;
+		border-radius: var(--radius-md);
+		overflow: hidden;
+		background-color: var(--bg-subtle);
+		box-shadow: var(--shadow-sm);
+	}
+
+	.picture :global(img) {
+		width: 100%;
 		height: 100%;
-		border-radius: 0.5rem;
+		object-fit: cover;
+		display: block;
 	}
 
-	main #disqus_thread {
-		margin-top: 4rem;
+	.content {
+		max-width: 720px;
 	}
 
-	main .astro-social-share {
-		background-color: aqua;
+	.article-divider {
+		max-width: 720px;
+		margin-left: auto;
+		margin-right: auto;
+		height: 1px;
+		background: linear-gradient(
+			90deg,
+			transparent 0%,
+			var(--border-strong) 50%,
+			transparent 100%
+		);
+	}
+
+	.bottom-share-heading {
+		font-family: var(--font-serif);
+		font-size: 1.4rem;
+		font-weight: 600;
+		color: var(--ink-primary);
+	}
+
+	.bottom-share-sub {
+		font-size: 0.92rem;
+		color: var(--ink-muted);
+	}
+
+	.author-card {
+		max-width: 720px;
+		margin-left: auto;
+		margin-right: auto;
+		background-color: var(--bg-canvas);
+		border: 1px solid var(--border-subtle);
+		border-radius: var(--radius-md);
+	}
+
+	.author-card-avatar {
+		width: 64px;
+		height: 64px;
+		border-radius: 999px;
+		overflow: hidden;
+		flex-shrink: 0;
+		border: 2px solid #ffffff;
+		box-shadow: var(--shadow-xs);
+	}
+
+	.author-card-avatar :global(img) {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		display: block;
+	}
+
+	.author-card-label {
+		font-size: 0.72rem;
+		font-weight: 600;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--accent-warm);
+	}
+
+	.author-card-name {
+		font-family: var(--font-serif);
+		color: var(--ink-primary);
+	}
+
+	.author-card-bio {
+		font-size: 0.9rem;
+		color: var(--ink-muted);
+		line-height: 1.6;
+	}
+
+	.discussion-section {
+		max-width: 720px;
+		margin-left: auto;
+		margin-right: auto;
+		background-color: var(--bg-canvas);
+		border: 1px solid var(--border-subtle);
+		border-radius: var(--radius-md);
+	}
+
+	@media (max-width: 575.98px) {
+		.article-shell {
+			border-radius: var(--radius-md);
+		}
+
+		.meta {
+			border-radius: var(--radius-md);
+		}
 	}
 </style>
