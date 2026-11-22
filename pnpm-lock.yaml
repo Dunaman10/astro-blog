@@ -17,6 +17,9 @@ importers:
       astro-seo:
         specifier: ^1.2.0
         version: 1.2.0
+      astro-social-share:
+        specifier: ^2.2.0
+        version: 2.2.0
       mdast-util-to-string:
         specifier: ^4.0.0
         version: 4.0.0
@@ -565,6 +568,9 @@ packages:
 
   astro-seo@1.2.0:
     resolution: {integrity: sha512-ZqS2ZLKJ9GZwcONho9W95xkGBWuPpikTsMBzjuq/6CKtKUEgMDbSZkoLwoZsmLVq/p52T4z7JwgjC3AtMg7Trg==}
+
+  astro-social-share@2.2.0:
+    resolution: {integrity: sha512-Z5ebhO6Yw4GLggw7wsTahdpS0f4pf/XuVjQlBpWZ0zyt0cKaVrlG/+u6RzrzN9B2t27wxp90XiosZNwvBZqA+Q==}
 
   astro@7.4.12:
     resolution: {integrity: sha512-DKX+Ds0rqV49HrLwEB9JFrCyfvQeC16FCe1HrPK8S3osiJH/e2vQ22CHIDOpI48UaeiPbxPT26peXgGTy6w0ig==}
@@ -1734,6 +1740,8 @@ snapshots:
   aria-query@5.3.2: {}
 
   astro-seo@1.2.0: {}
+
+  astro-social-share@2.2.0: {}
 
   astro@7.4.12(yaml@2.9.1):
     dependencies:
